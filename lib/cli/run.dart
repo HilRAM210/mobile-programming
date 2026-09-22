@@ -1,25 +1,57 @@
 // file ini hanya sementara saja untuk melakukan test di console sebelum melakukan implementasi di widget flutter
+import '../models/discounted_product.dart';
+import '../data/seeders/product_seeder.dart';
+import '../data/seeders/cart_item_seeder.dart';
+import '../data/seeders/favorite_item_seeder.dart';
 
-import '../model/product.dart';
-import '../model/discounted_product.dart';
-import '../model/cart_item.dart';
-import '../data/seeder.dart';
+void productList() {
+  print('Daftar Produk:');
+  for (var product in dummyProducts) {
+    print(
+      'ID: ${product.id}, Nama: ${product.name}, Harga: ${product.price}, Stok: ${product.stock}, Kategori: ${product.category.name}'
+    );
+    print('Deskripsi: ${product.description}');
+  }
 
-void main() {
-  print('Available Products:');
-  for (final p in dummyProducts) {
-    print('${p.id}. ${p.name} - Rp${p.price} (${p.getStockStatus()})');
-
-    if (p is DiscountedProduct) {
-      print('   Discount: ${p.discountPercentage}%');
-      print('   Discounted Price: Rp${p.getDiscountedPrice()}');
+  for (var product in dummyProducts) {
+    if (product is DiscountedProduct) {
+      print(
+        'ID: ${product.id}, Nama: ${product.name}, Harga Asli: ${product.price}, Harga Diskon: ${product.getDiscountedPrice()}, Stok: ${product.stock}, Kategori: ${product.category.name}, Diskon: ${product.discountPercentage}%'
+      );
+      print('Deskripsi: ${product.description}');
     }
   }
+}
 
-  print('\nCart Items:');
-  for (final item in dummyCartItems) {
-    print('${item.product.name} x${item.quantity} - Total: Rp${item.getCartItemPrice()}');
+void cartItemList() {
+  double totalPrice = 0;
+  print('Daftar Item di Keranjang:');
+  for (var cartItem in dummyCartItems) {
+    print(
+      'Produk: ${cartItem.product.name}, Jumlah: ${cartItem.quantity}, Harga Total: ${cartItem.product.price * cartItem.quantity}'
+    );
   }
 
-  print('\nTotal Cart Price: Rp${dummyCartItems.fold(0.0, (sum, item) => sum + item.getCartItemPrice())}');
+  print('Total Harga Keranjang:');
+  for (var cartItem in dummyCartItems) {
+    totalPrice += cartItem.product.price * cartItem.quantity;
+  }
+  print('Rp$totalPrice');
+}
+
+void favoriteItemList() {
+  print('Daftar Item Favorit:');
+  for (var favoriteItem in dummyFavoriteItems) {
+    print(
+      'Produk: ${favoriteItem.product.name}, Harga: ${favoriteItem.product.price}'
+    );
+  }
+}
+
+void main() {
+  productList();
+  print('\n');
+  cartItemList();
+  print('\n');
+  favoriteItemList();
 }

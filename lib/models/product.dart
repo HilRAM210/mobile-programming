@@ -1,16 +1,22 @@
+import 'category.dart';
+
 class Product {
-  final int id;
+  final String id;
   final String name;
   final double price;
   final int stock;
+  final Category category;
   final String? description;
+  final String? imageUrl;
 
   Product({
     required this.id,
     required this.name,
     required this.price,
     required this.stock,
+    required this.category,
     this.description,
+    this.imageUrl,
   });
 
   String getStockStatus() {
