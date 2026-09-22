@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../models/favorite_item.dart';
 import 'category_badge.dart';
+import 'price_label.dart';
+import 'stock_badge.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
@@ -27,6 +29,7 @@ class _ProductCardState extends State<ProductCard> {
     super.initState();
     // cek apakah produk ini sudah ada di daftar favorit
     _isLiked = widget.favorites.any((f) => f.product.id == widget.product.id);
+    debugPrint('[ProductCard:${widget.product.id}] initState isLiked=$_isLiked');
   }
 
   void _toggleLike() {
@@ -41,22 +44,27 @@ class _ProductCardState extends State<ProductCard> {
   }
 
   @override
+  void dispose() {
+    debugPrint('[ProductCard:${widget.product.id}] dispose');
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool isOutOfStock = widget.product.stock == 0;
+    debugPrint('[ProductCard:${widget.product.id}] build isLiked=$_isLiked');
 
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: widget.onTap,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.max,
           children: [
-            // Gambar produk + tombol like
             Stack(
               children: [
                 SizedBox(
-                  height: 130,
+                  height: 110,
                   width: double.infinity,
                   child: widget.product.imageUrl != null
                       ? Image.network(
@@ -66,7 +74,6 @@ class _ProductCardState extends State<ProductCard> {
                         )
                       : _placeholder(),
                 ),
-                // Tombol like di sudut kanan atas
                 Positioned(
                   top: 4,
                   right: 4,
@@ -75,7 +82,7 @@ class _ProductCardState extends State<ProductCard> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -89,52 +96,33 @@ class _ProductCardState extends State<ProductCard> {
               ],
             ),
 
-            // Info produk
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Badge kategori
-                  CategoryBadge(category: widget.product.category),
-                  const SizedBox(height: 6),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CategoryBadge(category: widget.product.category),
+                    const SizedBox(height: 4),
 
-                  // Nama produk
-                  Text(
-                    widget.product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                    Text(
+                      widget.product.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
+                    const SizedBox(height: 4),
 
-                  // Harga
-                  Text(
-                    'Rp ${widget.product.price.toStringAsFixed(0).replaceAllMapped(
-                          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                          (m) => '${m[1]}.',
-                        )}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
+                    PriceLabel(price: widget.product.price),
+                    const SizedBox(height: 4),
 
-                  // Status stok
-                  Text(
-                    widget.product.getStockStatus(),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isOutOfStock ? Colors.red : Colors.green,
-                    ),
-                  ),
-                ],
+                    StockBadge(stock: widget.product.stock),
+                  ],
+                ),
               ),
             ),
           ],

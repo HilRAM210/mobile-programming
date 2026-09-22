@@ -36,8 +36,8 @@ class ProductListPage extends StatelessWidget {
       body: GridView.builder(
         padding: const EdgeInsets.all(12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,       // 2 kolom
-          childAspectRatio: 0.72,  // tinggi card relatif terhadap lebar
+          crossAxisCount: 2, // 2 kolom
+          mainAxisExtent: 310,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
@@ -47,7 +47,6 @@ class ProductListPage extends StatelessWidget {
             product: dummyProducts[index],
             favorites: dummyFavoriteItems,
             onTap: () {
-              // nanti bisa navigasi ke halaman detail
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Dipilih: ${dummyProducts[index].name}')),
               );
