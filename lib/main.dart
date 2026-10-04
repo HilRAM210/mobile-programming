@@ -17,9 +17,10 @@ class MyApp extends StatelessWidget {
       title: 'TokoKamu',
       theme: AppTheme.light,
 
-      home: const MainPage(),
+      initialRoute: '/',
 
       routes: {
+        '/': (context) => const MainPage(),
         '/detail': (context) {
           final product =
               ModalRoute.of(context)!.settings.arguments as Product;
