@@ -3,126 +3,79 @@ import '../data/seeders/product_seeder.dart';
 import '../data/seeders/favorite_item_seeder.dart';
 import '../widgets/product_card.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  Future<void> _navigateToDetail(int index) async {
+    final product = dummyProducts[index];
+
+    final result = await Navigator.pushNamed(
+      context,
+      '/detail',
+      arguments: product,
+    );
+
+    if (!mounted) return;
+    if (result != null && result is int) {
+      final messenger = ScaffoldMessenger.of(context);
+      final primaryColor = Theme.of(context).colorScheme.primary;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            '${product.name} (x$result) ditambahkan ke keranjang!',
+          ),
+          backgroundColor: primaryColor,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final totalCart = 6;
+    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'TokoKamu',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Belanja jadi lebih mudah',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Keranjang dibuka'),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.shopping_cart_outlined),
-                      ),
-                      Positioned(
-                        top: 6,
-                        right: 6,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '$totalCart',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+      appBar: AppBar(
+        title: Text('Beranda', style: theme.textTheme.titleMedium),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Text(
+              'Daftar Produk (${dummyProducts.length})',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.grey[600],
               ),
             ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Daftar Produk (${dummyProducts.length})',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    'Lihat Semua',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: dummyProducts.length,
+              itemBuilder: (context, index) {
+                final product = dummyProducts[index];
+                return ProductCard(
+                  product: product,
+                  favorites: dummyFavoriteItems,
+                  onTap: () => _navigateToDetail(index),
+                  onFavoriteChanged: () => setState(() {}),
+                );
+              },
             ),
-            const SizedBox(height: 4),
-
-            Expanded(
-              child: ListView.builder(
-                itemCount: dummyProducts.length,
-                itemBuilder: (context, index) {
-                  final product = dummyProducts[index];
-                  return ProductCard(
-                    product: product,
-                    favorites: dummyFavoriteItems,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Dipilih: ${product.name}')),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

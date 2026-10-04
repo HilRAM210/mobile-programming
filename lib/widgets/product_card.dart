@@ -3,6 +3,8 @@ import '../models/product.dart';
 import '../models/discounted_product.dart';
 import '../models/favorite_item.dart';
 import 'category_badge.dart';
+import 'discount_badge.dart';
+import 'favorite_button.dart';
 import 'price_label.dart';
 import 'stock_badge.dart';
 
@@ -10,12 +12,14 @@ class ProductCard extends StatefulWidget {
   final Product product;
   final VoidCallback? onTap;
   final List<FavoriteItem> favorites;
+  final VoidCallback? onFavoriteChanged;
 
   const ProductCard({
     super.key,
     required this.product,
     required this.favorites,
     this.onTap,
+    this.onFavoriteChanged,
   });
 
   @override
@@ -23,36 +27,9 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
-  late bool _isLiked;
-
-  @override
-  void initState() {
-    super.initState();
-    _isLiked = widget.favorites.any((f) => f.product.id == widget.product.id);
-    debugPrint('[ProductCard:${widget.product.id}] initState isLiked=$_isLiked');
-  }
-
-  void _toggleLike() {
-    setState(() {
-      if (_isLiked) {
-        widget.favorites.removeWhere((f) => f.product.id == widget.product.id);
-      } else {
-        widget.favorites.add(FavoriteItem(product: widget.product));
-      }
-      _isLiked = !_isLiked;
-    });
-  }
-
   bool get _hasDiscount {
     if (widget.product is! DiscountedProduct) return false;
     return (widget.product as DiscountedProduct).discountPercentage > 0;
-  }
-
-  String get _discountLabel {
-    final d = widget.product as DiscountedProduct;
-    final v = d.discountPercentage;
-    final text = v % 1 == 0 ? v.toStringAsFixed(0) : v.toString();
-    return 'Diskon $text%';
   }
 
   @override
@@ -63,7 +40,7 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[ProductCard:${widget.product.id}] build isLiked=$_isLiked');
+    debugPrint('[ProductCard:${widget.product.id}] build');
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -102,43 +79,22 @@ class _ProductCardState extends State<ProductCard> {
                   Positioned(
                     top: 6,
                     left: 6,
-                    child: GestureDetector(
-                      onTap: _toggleLike,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _isLiked ? Icons.favorite : Icons.favorite_border,
-                          size: 16,
-                          color: _isLiked ? Colors.red : Colors.grey,
-                        ),
-                      ),
+                    child: FavoriteButton(
+                      product: widget.product,
+                      favorites: widget.favorites,
+                      onChanged: widget.onFavoriteChanged,
+                      size: 16,
+                      withBackground: true,
                     ),
                   ),
                   if (_hasDiscount)
                     Positioned(
                       top: 6,
                       right: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _discountLabel,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                      child: DiscountBadge(
+                        discountPercentage:
+                            (widget.product as DiscountedProduct)
+                                .discountPercentage,
                       ),
                     ),
                   Positioned(
