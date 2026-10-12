@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
 import 'screens/main_page.dart';
-import 'screens/product_detail_page.dart';
-import 'models/product.dart';
 import 'utils/app_theme.dart';
 
 void main() {
@@ -13,20 +13,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // GetMaterialApp mengaktifkan fitur GetX: state management,
+    // route management (Get.to / Get.off / Get.back), dan dependency
+    // management (Get.put / Get.find).
+    return GetMaterialApp(
       title: 'TokoKamu',
       theme: AppTheme.light,
-
-      initialRoute: '/',
-
-      routes: {
-        '/': (context) => const MainPage(),
-        '/detail': (context) {
-          final product =
-              ModalRoute.of(context)!.settings.arguments as Product;
-          return ProductDetailPage(product: product);
-        },
-      },
+      // Menyembunyikan pita "DEBUG" di pojok kanan atas.
+      // (Pita ini memang hanya muncul di mode debug.)
+      debugShowCheckedModeBanner: false,
+      home: const MainPage(),
     );
   }
 }

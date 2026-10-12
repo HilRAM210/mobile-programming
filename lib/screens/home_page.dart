@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../controllers/cart_controller.dart';
 import '../data/seeders/product_seeder.dart';
 import '../data/seeders/favorite_item_seeder.dart';
 import '../widgets/product_card.dart';
+import 'product_detail_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,30 +15,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  Future<void> _navigateToDetail(int index) async {
+  // Diambil dari "memori global" GetX — satu instance yang sama
+  // dengan yang dipakai di ProductDetailPage dan CartPage.
+  late final CartController cartController = Get.find<CartController>();
+
+  void _navigateToDetail(int index) {
     final product = dummyProducts[index];
 
-    final result = await Navigator.pushNamed(
-      context,
-      '/detail',
-      arguments: product,
-    );
-
-    if (!mounted) return;
-    if (result != null && result is int) {
-      final messenger = ScaffoldMessenger.of(context);
-      final primaryColor = Theme.of(context).colorScheme.primary;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            '${product.name} (x$result) ditambahkan ke keranjang!',
-          ),
-          backgroundColor: primaryColor,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    // Routing dengan GetX: tanpa Navigator.pushNamed maupun BuildContext.
+    Get.to(() => ProductDetailPage(product: product));
   }
 
   @override
@@ -48,6 +37,20 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          // Badge keranjang reaktif: Obx membangun ulang ikon ini
+          // setiap totalItem berubah — tanpa setState.
+          Obx(
+            () => Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Badge(
+                isLabelVisible: cartController.totalItem > 0,
+                label: Text('${cartController.totalItem}'),
+                child: const Icon(Icons.shopping_cart_outlined, size: 22),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

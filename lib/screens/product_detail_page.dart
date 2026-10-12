@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../controllers/cart_controller.dart';
 import '../data/seeders/favorite_item_seeder.dart';
 import '../models/product.dart';
+import '../utils/toast.dart';
 import '../models/discounted_product.dart';
 import '../widgets/category_badge.dart';
 import '../widgets/discount_badge.dart';
@@ -18,6 +22,9 @@ class ProductDetailPage extends StatefulWidget {
 }
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
+  // Instance yang sama dengan yang terdaftar di MainPage (Get.put).
+  final CartController cartController = Get.find<CartController>();
+
   int _quantity = 1;
 
   bool get _hasDiscount {
@@ -43,7 +50,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   void _addToCart() {
-    Navigator.pop(context, _quantity);
+    // State keranjang dikelola GetX — tidak ada setState di sini.
+    // Cukup panggil method controller, badge di HomePage ikut berubah.
+    cartController.addToCart(widget.product, quantity: _quantity);
+
+    showToast('${widget.product.name} (x$_quantity) ditambahkan ke keranjang!');
+
+    Get.back();
   }
 
   @override
@@ -58,7 +71,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Get.back(),
         ),
         title: Text(
           'Detail Produk',
