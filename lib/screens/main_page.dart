@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/cart_controller.dart';
+import '../controllers/favorite_controller.dart';
 import 'home_page.dart';
 import 'cart_page.dart';
 import 'favorite_page.dart';
@@ -20,10 +21,13 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
-    // Dependency injection: daftarkan CartController sekali di awal
+    // Dependency injection: daftarkan controller sekali di awal
     // aplikasi. Halaman lain cukup mengambilnya dengan Get.find().
     if (!Get.isRegistered<CartController>()) {
       Get.put(CartController());
+    }
+    if (!Get.isRegistered<FavoriteController>()) {
+      Get.put(FavoriteController());
     }
   }
 

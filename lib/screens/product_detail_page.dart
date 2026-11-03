@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/cart_controller.dart';
-import '../data/seeders/favorite_item_seeder.dart';
+import '../controllers/favorite_controller.dart';
 import '../models/product.dart';
+import '../services/product_service.dart';
 import '../utils/toast.dart';
 import '../models/discounted_product.dart';
 import '../widgets/category_badge.dart';
@@ -24,44 +25,73 @@ class ProductDetailPage extends StatefulWidget {
 class _ProductDetailPageState extends State<ProductDetailPage> {
   // Instance yang sama dengan yang terdaftar di MainPage (Get.put).
   final CartController cartController = Get.find<CartController>();
+  final FavoriteController favoriteController = Get.find<FavoriteController>();
 
   int _quantity = 1;
 
-  bool get _hasDiscount {
-    if (widget.product is! DiscountedProduct) return false;
-    return (widget.product as DiscountedProduct).discountPercentage > 0;
+  /// Future yang menampung hasil pengambilan detail produk dari REST API
+  /// sebagai alternatif data yang dikirim lewat navigasi.
+  late final Future<Product> _detailFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ambil detail produk terbaru dari API berdasarkan ID-nya. Bila ID
+    // bukan angka (data dummy lama) atau request gagal, data navigasi
+    // (widget.product) tetap dipakai sebagai fallback.
+    final id = int.tryParse(widget.product.id);
+    _detailFuture = id == null
+        ? Future.value(widget.product)
+        : ProductService.fetchProductDetail(id);
   }
 
-  double get _effectivePrice {
-    if (_hasDiscount) {
-      return (widget.product as DiscountedProduct).getDiscountedPrice();
+  bool _hasDiscount(Product product) {
+    if (product is! DiscountedProduct) return false;
+    return product.discountPercentage > 0;
+  }
+
+  double _effectivePrice(Product product) {
+    if (product is DiscountedProduct && product.discountPercentage > 0) {
+      return product.getDiscountedPrice();
     }
-    return widget.product.price;
+    return product.price;
   }
 
-  bool get _isOutOfStock => widget.product.stock == 0;
+  bool _isOutOfStock(Product product) => product.stock == 0;
 
   void _decrement() {
     if (_quantity > 1) setState(() => _quantity--);
   }
 
-  void _increment() {
-    if (_quantity < widget.product.stock) setState(() => _quantity++);
+  void _increment(Product product) {
+    if (_quantity < product.stock) setState(() => _quantity++);
   }
 
-  void _addToCart() {
+  void _addToCart(Product product) {
     // State keranjang dikelola GetX — tidak ada setState di sini.
     // Cukup panggil method controller, badge di HomePage ikut berubah.
-    cartController.addToCart(widget.product, quantity: _quantity);
+    cartController.addToCart(product, quantity: _quantity);
 
-    showToast('${widget.product.name} (x$_quantity) ditambahkan ke keranjang!');
+    showToast('${product.name} (x$_quantity) ditambahkan ke keranjang!');
 
     Get.back();
   }
 
   @override
   Widget build(BuildContext context) {
-    final product = widget.product;
+    // Data navigasi (widget.product) tampil lebih dulu lewat initialData,
+    // lalu diganti oleh data terbaru dari API bila request-nya berhasil.
+    return FutureBuilder<Product>(
+      future: _detailFuture,
+      initialData: widget.product,
+      builder: (context, snapshot) {
+        final product = snapshot.data ?? widget.product;
+        return _buildPage(context, product);
+      },
+    );
+  }
+
+  Widget _buildPage(BuildContext context, Product product) {
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -81,7 +111,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         actions: [
           FavoriteButton(
             product: product,
-            favorites: dummyFavoriteItems,
+            favorites: favoriteController.favorites,
             size: 22,
           ),
           const SizedBox(width: 4),
@@ -105,7 +135,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         )
                       : _imagePlaceholder(),
                 ),
-                if (_hasDiscount)
+                if (_hasDiscount(product))
                   Positioned(
                     top: 12,
                     right: 12,
@@ -139,7 +169,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   const SizedBox(height: 10),
 
                   // Harga
-                  if (_hasDiscount) ...[
+                  if (_hasDiscount(product)) ...[
                     Text(
                       PriceLabel.formatRupiah(product.price),
                       style: TextStyle(
@@ -150,7 +180,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ),
                     const SizedBox(height: 2),
                   ],
-                  PriceLabel(price: _effectivePrice),
+                  PriceLabel(price: _effectivePrice(product)),
                 ],
               ),
             ),
@@ -226,8 +256,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 children: [
                   _QuantityButton(
                     icon: Icons.remove,
-                    onTap: _isOutOfStock ? null : _decrement,
-                    enabled: _quantity > 1 && !_isOutOfStock,
+                    onTap: _isOutOfStock(product) ? null : _decrement,
+                    enabled: _quantity > 1 && !_isOutOfStock(product),
                   ),
                   SizedBox(
                     width: 40,
@@ -239,8 +269,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   _QuantityButton(
                     icon: Icons.add,
-                    onTap: _isOutOfStock ? null : _increment,
-                    enabled: _quantity < product.stock && !_isOutOfStock,
+                    onTap: _isOutOfStock(product)
+                        ? null
+                        : () => _increment(product),
+                    enabled: _quantity < product.stock && !_isOutOfStock(product),
                   ),
                 ],
               ),
@@ -250,10 +282,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             // Add to Cart button
             Expanded(
               child: FilledButton.icon(
-                onPressed: _isOutOfStock ? null : _addToCart,
+                onPressed: _isOutOfStock(product) ? null : () => _addToCart(product),
                 icon: const Icon(Icons.shopping_cart_outlined, size: 18),
                 label: Text(
-                  _isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang',
+                  _isOutOfStock(product) ? 'Stok Habis' : 'Tambah ke Keranjang',
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: Colors.white,
                   ),

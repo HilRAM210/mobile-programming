@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Izin akses jaringan: dibutuhkan untuk mengambil data produk
+         dari REST API (HTTP networking). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="tokokamu"
         android:name="${applicationName}"

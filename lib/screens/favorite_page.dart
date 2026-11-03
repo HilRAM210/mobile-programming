@@ -1,44 +1,27 @@
 import 'package:flutter/material.dart';
-import '../data/seeders/favorite_item_seeder.dart';
-import '../widgets/product_card.dart';
+import 'package:get/get.dart';
 
-class FavoritePage extends StatefulWidget {
+import '../controllers/favorite_controller.dart';
+import '../models/favorite_item.dart';
+import '../models/product.dart';
+import '../widgets/product_card.dart';
+import 'product_detail_page.dart';
+
+/// Halaman daftar produk favorit. Sumber datanya adalah [FavoriteController]
+/// (produk hasil fetch dari REST API yang di-favorit-kan pengguna),
+/// dan tampilannya reaktif lewat Obx.
+class FavoritePage extends StatelessWidget {
   const FavoritePage({super.key});
 
-  @override
-  State<FavoritePage> createState() => _FavoritePageState();
-}
-
-class _FavoritePageState extends State<FavoritePage> {
-  Future<void> _navigateToDetail(int index) async {
-    final product = dummyFavoriteItems[index].product;
-
-    final result = await Navigator.pushNamed(
-      context,
-      '/detail',
-      arguments: product,
-    );
-
-    if (!mounted) return;
-    if (result != null && result is int) {
-      final messenger = ScaffoldMessenger.of(context);
-      final primaryColor = Theme.of(context).colorScheme.primary;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            '${product.name} (x$result) ditambahkan ke keranjang!',
-          ),
-          backgroundColor: primaryColor,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+  void _navigateToDetail(Product product) {
+    // Routing dengan GetX — konsisten dengan HomePage.
+    Get.to(() => ProductDetailPage(product: product));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final favoriteController = Get.find<FavoriteController>();
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -48,39 +31,45 @@ class _FavoritePageState extends State<FavoritePage> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: dummyFavoriteItems.isEmpty
-          ? _buildEmpty(theme)
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Row(
-                    children: [
-                      Text(
-                        '${dummyFavoriteItems.length} produk favorit',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
+      // Obx membangun ulang bagian ini setiap daftar favorit berubah —
+      // tanpa setState.
+      body: Obx(() {
+        final List<FavoriteItem> favorites = favoriteController.favorites;
+
+        return favorites.isEmpty
+            ? _buildEmpty(theme)
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${favorites.length} produk favorit',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: dummyFavoriteItems.length,
-                    itemBuilder: (context, index) {
-                      final product = dummyFavoriteItems[index].product;
-                      return ProductCard(
-                        product: product,
-                        favorites: dummyFavoriteItems,
-                        onTap: () => _navigateToDetail(index),
-                        onFavoriteChanged: () => setState(() {}),
-                      );
-                    },
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: favorites.length,
+                      itemBuilder: (context, index) {
+                        final product = favorites[index].product;
+                        return ProductCard(
+                          key: ValueKey(product.id),
+                          product: product,
+                          favorites: favorites,
+                          onTap: () => _navigateToDetail(product),
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              );
+      }),
     );
   }
 
